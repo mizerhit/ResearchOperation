@@ -80,7 +80,7 @@ def find_cycle(matrix: List[List[int]]) -> List[List[int]]:
             columns.remove(j)
 
         array = delete_rows(matrix, columns, rows)
-        if array and not cycle:
+        if array:
             cycle = False
         for j in array:
             rows.remove(j)
