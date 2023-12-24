@@ -1,5 +1,8 @@
+from prettytable import PrettyTable
+table = PrettyTable()
+
 def Input(restrictions, variables):
-    input_arr = list(map(str, str(input("Введите целевую функцию: 300x1 + x2 + 400x4 (пример) \n")).split()))
+    input_arr = list(map(str, str(input("Цены за единицу продукции каждого вида: 300x1 + x2 + 400x4 (пример) \n")).split()))
     for j in range(len(input_arr)):
         if input_arr[j] == '+':
             continue
@@ -14,7 +17,7 @@ def Input(restrictions, variables):
             multipliers[int(input_arr[j][input_arr[j].find("x") + 1:])] = float(input_arr[j][:input_arr[j].find("x")])
 
     for i in range(restrictions):
-        input_arr = list(map(str, str(input("Введите ограничения: 2x1 + x2 + 3x4 <= 100 (пример)\n")).split()))
+        input_arr = list(map(str, str(input("Введите элементы таблицы ограничений C1, C2 и тд. и количество доступных ресурсов: 2x1 + x2 + 3x4 <= 100 (пример)\n")).split()))
         simplex_table[i][0] = float(input_arr[-1])
         for j in range(len(input_arr) - 1):
             if input_arr[j] == '+':
@@ -98,10 +101,9 @@ def Select_Main_Line(restrictions) -> int:
                 index_min_element = i
     return index_min_element
 
-
-variables = int(input("Кол-во переменных: "))
-restrictions = int(input("Кол-во ограничений: "))
-F_max = (str(input("max или min: ")) == 'max')
+variables = int(input("Какое в вашей таблице кол-во кол-во столбцов: "))
+restrictions = int(input("Какое в вашей таблице кол-во строк не считая цены за ед. изделия: "))
+F_max = (str(input("Вы хотите максимизировать или минимизировать? Введите max или min: ")) == 'max')
 multipliers = [0 for j in range(variables + 1)]
 simplex_table = [[0 for j in range(variables + 1)] for i in range(restrictions)]
 inequalities = []
@@ -114,12 +116,20 @@ Fill_Idx_Str(restrictions)
 guide_column = Select_Main_Column(F_max)
 guide_line = Select_Main_Line(restrictions)
 
+counter = 0
 while there_negatives:
+    counter += 1
     guide_line = Select_Main_Line(restrictions)
     guide_elem = simplex_table[guide_line][guide_column]
-
+    table.add_rows(simplex_table)
+    table.padding_width = 1
+    table.header = False
+    print("\n Таблица на ", counter, "шаге")
+    print(table)
+    
     basis[guide_line] = guide_column
-
+    print("Индексы базисных переменных:")
+    print(basis)
     new_simplex_table = [0 for x in range(restrictions)]
     for i in range(restrictions):
         new_simplex_table[i] = [0 for x in range(len(simplex_table[i]))]
