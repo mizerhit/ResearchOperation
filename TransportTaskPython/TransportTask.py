@@ -1,46 +1,45 @@
-from typing import List
-import tqdm
-import time
+from prettytable import PrettyTable
 
-EPSILON = 0.001
-INFINITY = 10000
+table = PrettyTable()
 
-def add_fictitious_points(units_consumed: List[int], units_supplied: List[int], transportation_costs: List[List[int]]):
-    for _ in tqdm.tqdm(range(50)):
-        time.sleep(0.1)
-    if sum(units_consumed) < sum(units_supplied):
-        shortage = sum(units_supplied) - sum(units_consumed)
-        units_consumed.append(shortage)
-        transportation_costs.extend([[0] * len(units_consumed) for _ in range(len(units_supplied))])
-    elif sum(units_consumed) > sum(units_supplied):
-        surplus = sum(units_consumed) - sum(units_supplied)
-        units_supplied.append(surplus)
-        transportation_costs.append([0] * len(units_consumed))
+global count
+
+print("Здравствуйте, я программа помогающая найти лучший план перевозки продуцкции c минимальными для вас затратами.")
+
+def fictitious_points():
+    if sum(number_units_consumers) < sum(number_units_suppliers):
+        number_units_consumers.append(sum(number_units_suppliers) - sum(number_units_consumers))
+        for i in range(len(number_units_suppliers)):
+            transportation_costs[i].append(0)
+    if sum(number_units_consumers) > sum(number_units_suppliers):
+        number_units_suppliers.append(sum(number_units_consumers) - sum(number_units_suppliers))
+        transportation_costs.append([0 for _ in range(len(number_units_consumers))])
 
 
-def find_reference_plan(units_supplied: List[int], units_consumed: List[int], transportation_costs: List[List[int]]):
-    copy_sup = units_supplied.copy()
-    copy_con = units_consumed.copy()
-    reference_plan = [[0] * len(units_consumed) for _ in range(len(units_supplied))]
-
-    for supplier_idx in range(len(copy_sup)):
-        if copy_sup[supplier_idx] > 0:
-            for consumer_idx in range(len(copy_con)):
-                if copy_sup[supplier_idx] > 0 and copy_con[consumer_idx] > 0:
-                    elem_plan = min(copy_sup[supplier_idx], copy_con[consumer_idx])
-                    reference_plan[supplier_idx][consumer_idx] = elem_plan
-                    copy_sup[supplier_idx] -= elem_plan
-                    copy_con[consumer_idx] -= elem_plan
-
-    return reference_plan
+def reference_plan_search():
+    copy_sup = number_units_suppliers
+    copy_con = number_units_consumers
+    for m in range(len(copy_sup)):
+        if copy_sup[m] > 0:
+            for n in range(len(copy_con)):
+                if copy_sup[m] > 0:
+                    if copy_con[n] > 0:
+                        elem_plan = min(copy_sup[m], copy_con[n])
+                        reference_plan[m][n] = elem_plan
+                        copy_sup[m] -= elem_plan
+                        copy_con[n] -= elem_plan
 
 
-def is_degeneracy(matrix: List[List[int]]) -> bool:
-    positive_elem_plan = sum(1 for row in matrix for elem in row if elem > 0)
-    return len(units_supplied) + len(units_consumed) - 1 != positive_elem_plan
+def degeneracy(matrix) -> bool:
+    positive_elem_plan = 0
+    for m in range(len(number_units_suppliers)):
+        for n in range(len(number_units_consumers)):
+            if matrix[m][n] > 0:
+                positive_elem_plan += 1
+    return len(number_units_suppliers) + len(number_units_consumers) - 1 != positive_elem_plan
 
 
-def delete_columns(matrix: List[List[int]], columns: List[int], rows: List[int]) -> List[int]:
+def delete_columns(matrix, columns, rows):
     deleted_array = []
     for n in columns:
         count_non_zero = 0
@@ -54,7 +53,7 @@ def delete_columns(matrix: List[List[int]], columns: List[int], rows: List[int])
     return deleted_array
 
 
-def delete_rows(matrix: List[List[int]], columns: List[int], rows: List[int]) -> List[int]:
+def delete_rows(matrix, columns, rows):
     deleted_array = []
     for m in rows:
         count_non_zero = 0
@@ -68,7 +67,7 @@ def delete_rows(matrix: List[List[int]], columns: List[int], rows: List[int]) ->
     return deleted_array
 
 
-def find_cycle(matrix: List[List[int]]) -> List[List[int]]:
+def cycle_search(matrix):
     columns = [x for x in range(len(matrix[0]))]
     rows = [x for x in range(len(matrix))]
     cycle = False
@@ -109,35 +108,35 @@ def find_cycle(matrix: List[List[int]]) -> List[List[int]]:
         return cycle_coordinates
 
 
-def fix_degeneracy(plan: List[List[int]]) -> List[List[int]]:
+def fight_against_degeneracy(plan):
     for m in range(len(plan)):
         for n in range(len(plan[m])):
             if plan[m][n] == 0:
                 plan[m][n] = 0.001
-                if not is_degeneracy(plan) and not find_cycle(plan):
+                if not cycle_search(plan):
                     return plan
                 else:
                     plan[m][n] = 0
 
 
-def calculate_potentials(plan: List[List[int]]) -> List[List[int]]:
-    array_u = [0] + [INFINITY for _ in range(1, len(plan))]
-    array_v = [INFINITY for _ in range(len(plan[0]))]
-    while INFINITY in array_u or INFINITY in array_v:
+def potential_calculation(plan):
+    array_u = [0] + [10000 for _ in range(1, len(plan))]
+    array_v = [10000 for _ in range(len(plan[0]))]
+    while 10000 in array_u or 10000 in array_v:
         for u in range(len(array_u)):
-            if array_u[u] != INFINITY:
+            if array_u[u] != 10000:
                 for v in range(len(array_v)):
-                    if plan[u][v] != 0 and array_v[v] == INFINITY:
+                    if plan[u][v] != 0 and array_v[v] == 10000:
                         array_v[v] = array_u[u] + transportation_costs[u][v]
         for v in range(len(array_v)):
-            if array_v[v] != INFINITY:
+            if array_v[v] != 10000:
                 for u in range(len(array_u)):
-                    if plan[u][v] != 0 and array_u[u] == INFINITY:
+                    if plan[u][v] != 0 and array_u[u] == 10000:
                         array_u[u] = array_v[v] - transportation_costs[u][v]
     return array_u, array_v
 
 
-def find_min_elem_matrix(matrix: List[List[int]]) -> List[int]:
+def min_elem_matrix(matrix):
     x, y = 0, 0
     min_elem = matrix[x][y]
     for m in range(len(matrix)):
@@ -148,22 +147,22 @@ def find_min_elem_matrix(matrix: List[List[int]]) -> List[int]:
     return [min_elem, x, y]
 
 
-def complete_evaluation_matrix(plan: List[List[int]]) -> List[List[int]]:
+def evaluation_matrix_completion(plan):
     evaluation_matrix = [[n for n in transportation_costs[m]] for m in range(len(transportation_costs))]
-    array_u, array_v = calculate_potentials(plan)
+    array_u, array_v = potential_calculation(plan)
     for m in range(len(plan)):
         for n in range(len(plan[m])):
             evaluation_matrix[m][n] = evaluation_matrix[m][n] + array_u[m] - array_v[n]
     return evaluation_matrix
 
 
-def convert_plan(old_plan: List[List[int]], x: int, y: int) -> List[List[int]]:
+def plan_conversion(old_plan, x, y):
     old_plan[x][y] = 1
-    cycle = find_cycle(old_plan)
+    cycle = cycle_search(old_plan)
     new_plan = [[n for n in old_plan[m]] for m in range(len(old_plan))]
     old_plan[x][y] = 0
     minus = 0
-    theta = INFINITY
+    theta = 10000
     for j in range(len(cycle)):
         if cycle[j][0] == x and cycle[j][1] == y:
             minus = (j - 1) % 2
@@ -177,7 +176,9 @@ def convert_plan(old_plan: List[List[int]], x: int, y: int) -> List[List[int]]:
     return new_plan
 
 
-def calculate_goal_function(reference_plan: List[List[int]], transportation_costs: List[List[int]]) -> int:
+def goal_function_calculation():
+    global reference_plan
+    global transportation_costs
     goal_function = 0
     for m in range(len(reference_plan)):
         for n in range(len(reference_plan[m])):
@@ -185,36 +186,46 @@ def calculate_goal_function(reference_plan: List[List[int]], transportation_cost
     return int(goal_function)
 
 
-def optimize_plan():
+count = 1
+def plan_optimization():
+    global count
     global reference_plan
-    if is_degeneracy(reference_plan):
-        fix_degeneracy(reference_plan)
-    evaluation_matrix = complete_evaluation_matrix(reference_plan)
-    while find_min_elem_matrix(evaluation_matrix)[0] < 0:
-        coord_x, coord_y = find_min_elem_matrix(evaluation_matrix)[1], find_min_elem_matrix(evaluation_matrix)[2]
-        reference_plan = convert_plan(reference_plan, coord_x, coord_y)
-        if is_degeneracy(reference_plan):
-            fix_degeneracy(reference_plan)
-        evaluation_matrix = complete_evaluation_matrix(reference_plan)
+    while degeneracy(reference_plan):
+        fight_against_degeneracy(reference_plan)
+    evaluation_matrix = evaluation_matrix_completion(reference_plan)
+    
+    while min_elem_matrix(evaluation_matrix)[0] < 0:
+        coord_x, coord_y = min_elem_matrix(evaluation_matrix)[1], min_elem_matrix(evaluation_matrix)[2]
+        reference_plan = plan_conversion(reference_plan, coord_x, coord_y)
+        table.clear()
+        table.padding_width = 1
+        table.header = False
+        for k in range(len(reference_plan)):
+            table.add_row(reference_plan[k])
+        count += 1
+        print("Матрица перевозок на ", count, " шагу")
+        print(table)
+        while degeneracy(reference_plan):
+            fight_against_degeneracy(reference_plan)
+        evaluation_matrix = evaluation_matrix_completion(reference_plan)
+    
+number_units_suppliers = list(map(int, input("Введите количество единиц продукции поставщиков: ").split()))
+number_units_consumers = list(map(int, input("Введите количество единиц продукции потребителей: ").split()))
+transportation_costs = [list(map(int, input(f"Введите стоимость перевозки из {i + 1} склада во все магазины: \n").split())) for i in range(len(number_units_suppliers))]
+print("\n \n")
 
 
-def main():
-    global reference_plan
-    global units_supplied
-    global units_consumed
-    global transportation_costs
+fictitious_points()
+reference_plan = [[0 for n in range(len(number_units_consumers))] for m in range(len(number_units_suppliers))]
+reference_plan_search()
 
-    units_supplied = list(map(int, input("Через пробел введите количества товаров хранящихся в каждой точке (Пример: 10 5 6 7):\n").split()))
-    units_consumed = list(map(int, input("Через пробел введите количества товаров требующихся в каждой точке (Пример: 20 50 40):\n").split()))
-    transportation_costs = [list(map(int, input("Также через пробел введите цены транспортирвок: \n").split())) for _ in
-                            range(len(units_supplied))]
-
-    add_fictitious_points(units_consumed, units_supplied, transportation_costs)
-    reference_plan = find_reference_plan(units_supplied, units_consumed, transportation_costs)
-
-    optimize_plan()
-    print("Минимальные затраты на транспортировку равны ", calculate_goal_function(reference_plan, transportation_costs))
-
-
-if __name__ == "__main__":
-    main()
+table.clear()
+table.padding_width = 1
+table.header = False
+        
+for k in range(len(reference_plan)):
+    table.add_row(reference_plan[k])
+print("Матрица перевозок на ", count, " шагу")
+print(table)
+plan_optimization()
+print("\n Минимальные затраты на перевозку:", goal_function_calculation())

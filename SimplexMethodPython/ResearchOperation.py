@@ -1,6 +1,7 @@
 from prettytable import PrettyTable
 table = PrettyTable()
 
+print("Здравствуйте, я программа помогающая найти лучший план производстава продуцкции c максимальной прибылью для вас.")
 def Input(restrictions, variables):
     input_arr = list(map(str, str(input("Цены за единицу продукции каждого вида: 300x1 + x2 + 400x4 (пример) \n")).split()))
     for j in range(len(input_arr)):
@@ -101,9 +102,9 @@ def Select_Main_Line(restrictions) -> int:
                 index_min_element = i
     return index_min_element
 
-variables = int(input("Какое в вашей таблице кол-во кол-во столбцов: "))
-restrictions = int(input("Какое в вашей таблице кол-во строк не считая цены за ед. изделия: "))
-F_max = (str(input("Вы хотите максимизировать или минимизировать? Введите max или min: ")) == 'max')
+variables = int(input("Какое y вас количество типов продукции: "))
+restrictions = int(input("Какое y вас количество типов необходимых ресурсов: "))
+F_max = 1
 multipliers = [0 for j in range(variables + 1)]
 simplex_table = [[0 for j in range(variables + 1)] for i in range(restrictions)]
 inequalities = []
@@ -121,9 +122,11 @@ while there_negatives:
     counter += 1
     guide_line = Select_Main_Line(restrictions)
     guide_elem = simplex_table[guide_line][guide_column]
+    table.clear()
     table.add_rows(simplex_table)
     table.padding_width = 1
     table.header = False
+    table.add_row(index_string)
     print("\n Таблица на ", counter, "шаге")
     print(table)
     
